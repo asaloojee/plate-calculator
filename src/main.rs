@@ -3,19 +3,19 @@ use std::io;
 fn main() {
     println!("Enter a weight in pounds to see what plates you would need to load:");
 
-    let weight = get_user_input();
+    let weight = get_user_input() as f64;
     let plate_sizes = [45.0, 35.0, 25.0, 10.0, 5.0, 2.5];
+    let bar_weight = 45.0;
 
-    if let Err(message) = validate_weight(&weight) {
+    if let Err(message) = validate_weight(&weight, &bar_weight) {
         eprintln!("{message}");
     }
 
-    let weight_without_bar = weight - 45;
+    let mut weight_without_bar = weight - bar_weight;
 
-    plate_sizes.iter().fold(weight_without_bar, |acc, &plate| {
-        check_num_of_plates(acc as f64, plate);
-        acc
-    });
+    for x in &plate_sizes {
+        weight_without_bar = check_plates_per_side(weight_without_bar, *x);
+    }
 }
 
 fn get_user_input() -> i32 {
@@ -30,24 +30,27 @@ fn get_user_input() -> i32 {
     weight
 }
 
-fn validate_weight(weight: &i32) -> Result<f64, &'static str> {
-    if weight % 5 != 0 {
+fn validate_weight(weight: &f64, bar_weight: &f64) -> Result<f64, &'static str> {
+    if weight % 5.0 != 0.0 {
         eprintln!("Weight should be divisible by 5.");
     }
 
-    Ok(*weight as f64)
+    if weight < bar_weight {
+        eprintln!("Weight should be more than just the bar weight.");
+    }
+
+    Ok(*weight)
 }
 
-fn check_num_of_plates(weight: f64, plate: f64) -> f64 {
-    if weight % (plate * 2.0) > 0.0 && weight % (plate * 2.0) == 0.0 {
-        let num_of_plates = weight / plate;
-        println!("You will need {num_of_plates}x {plate} plates.");
-        0.0
-    } else if weight % (plate * 2.0) > 0.0 && weight % (plate * 2.0) != 0.0 {
-        let plates_per_side = (weight / plate) / 2.0;
-        println!("You will need {plates_per_side}x {plate} plates per side.");
-        weight - plates_per_side * 2.0
-    } else {
+fn check_plates_per_side(weight: f64, plate: f64) -> f64 {
+    if weight < (plate * 2.0) {
         weight
+    } else {
+        let weight_per_side = weight / 2.0;
+        let extra_weight_per_side = weight_per_side % plate;
+        let plate_weight_per_side = weight_per_side - extra_weight_per_side;
+        let plates_per_side = plate_weight_per_side / plate;
+        println!("You will need {plates_per_side}x {plate}-lbs plate(s) per side.");
+        extra_weight_per_side * 2.0
     }
 }
