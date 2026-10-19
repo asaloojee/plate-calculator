@@ -1,9 +1,25 @@
+use core::num;
 use std::io;
 
 fn main() {
     println!("Enter a weight in pounds to see what plates you would need to load:");
 
-    let weight = get_user_input() as f64;
+    let user_input = match get_user_input() {
+        Ok(input) => input,
+        Err(error) => {
+            eprintln!("Error getting user input: {error}");
+            return;
+        }
+    };
+
+    let weight = match parse_user_input(user_input) {
+        Ok(weight) => weight,
+        Err(error) => {
+            eprintln!("Error parsing user input: {error}");
+            return;
+        }
+    };
+
     let plate_sizes = [45.0, 35.0, 25.0, 10.0, 5.0, 2.5];
     let bar_weight = 45.0;
 
@@ -24,16 +40,18 @@ fn main() {
     }
 }
 
-fn get_user_input() -> i32 {
+fn get_user_input() -> Result<String, io::Error> {
     let mut input = String::new();
 
-    io::stdin()
-        .read_line(&mut input)
-        .expect("Failed to read line");
+    io::stdin().read_line(&mut input)?;
 
-    let weight: i32 = input.trim().parse().expect("Not a valid number!");
+    Ok(input)
+}
 
-    weight
+fn parse_user_input(input: String) -> Result<f64, num::ParseFloatError> {
+    let weight: f64 = input.trim().parse()?;
+
+    Ok(weight)
 }
 
 fn validate_weight(weight: f64, bar_weight: f64) -> Result<(), &'static str> {
